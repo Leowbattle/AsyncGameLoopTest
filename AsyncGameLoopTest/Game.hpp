@@ -31,6 +31,8 @@ public:
 	Event<> nextFrame();
 	Event<SDL_Point> mouseClicked();
 
+	void drawRect(const DrawRectCommand& cmd);
+
 	inline static const int Width = 1920;
 	inline static const int Height = 1080;
 private:

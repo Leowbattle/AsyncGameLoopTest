@@ -61,6 +61,7 @@ public:
 	void setResult() {
 		std::shared_ptr<EventInternal> old = internal;
 		internal = std::make_shared<EventInternal>();
+		//printf("allocate ");
 		old->setResult();
 	}
 

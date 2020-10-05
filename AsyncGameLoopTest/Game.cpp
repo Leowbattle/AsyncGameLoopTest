@@ -33,13 +33,17 @@ void Game::run(Script&& script) {
 	}
 }
 
+void Game::drawRect(const DrawRectCommand& cmd) {
+	drawRectCommands.push_back(cmd);
+}
+
 void Game::draw() {
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderClear(renderer);
 
 	for (const DrawRectCommand& cmd : drawRectCommands) {
 		SDL_SetRenderDrawColor(renderer, cmd.colour.r, cmd.colour.g, cmd.colour.b, 255);
-		SDL_RenderDrawRect(renderer, &cmd.rect);
+		SDL_RenderFillRect(renderer, &cmd.rect);
 	}
 	drawRectCommands.clear();
 

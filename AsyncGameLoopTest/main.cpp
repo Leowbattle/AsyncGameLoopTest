@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 #include <chrono>
 #include <memory>
@@ -6,22 +7,33 @@
 #include "Game.hpp"
 
 Script gameScript(std::shared_ptr<Game> game) {
-	int i = 0;
-	
-	auto last = std::chrono::steady_clock::now();
+	float x = 50;
+	float y = 50;
 
 	while (true) {
-		for (int i = 0; i < 60; i++) {
+		SDL_Point clickPos = co_await game->mouseClicked();
+
+		float dx = clickPos.x - x;
+		float dy = clickPos.y - y;
+		float distance = hypotf(dx, dy);
+
+		dx /= distance;
+		dy /= distance;
+
+		float speed = 15;
+		int steps = distance / speed;
+
+		for (int i = 0; i < steps; i++) {
+			x += dx * speed;
+			y += dy * speed;
+
+			game->drawRect(DrawRectCommand{
+				.rect = {(int)x, (int)y, 5, 5},
+				.colour = {255, 0, 0}
+				});
+
 			co_await game->nextFrame();
 		}
-
-		auto now = std::chrono::steady_clock::now();
-		std::chrono::duration<float> diff = now - last;
-
-		i++;
-		printf("%d seconds have passed, %f\n", i, diff.count());
-
-		last = now;
 	}
 }
 
