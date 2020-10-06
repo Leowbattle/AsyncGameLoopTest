@@ -6,13 +6,14 @@
 
 #include "Game.hpp"
 
-Script what(std::shared_ptr<Game> game) {
+Script<int> what(std::shared_ptr<Game> game) {
 	co_await game->nextFrame();
 	printf("wow\n");
+	co_return 42;
 }
 
-Script gameScript(std::shared_ptr<Game> game) {
-	co_await what(game);
+Script<> gameScript(std::shared_ptr<Game> game) {
+	int whatever = co_await what(game);
 
 	float x = 50;
 	float y = 50;

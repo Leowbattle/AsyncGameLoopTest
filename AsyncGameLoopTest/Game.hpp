@@ -26,7 +26,7 @@ class Game {
 public:
 	Game();
 
-	void run(Script&& script);
+	void run(Script<>&& script);
 
 	Event<> nextFrame();
 	Event<SDL_Point> mouseClicked();

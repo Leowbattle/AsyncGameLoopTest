@@ -7,7 +7,7 @@ Game::Game() {
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 }
 
-void Game::run(Script&& script) {
+void Game::run(Script<>&& script) {
 	while (true) {
 		SDL_Event event;
 
