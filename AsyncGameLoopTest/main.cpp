@@ -15,10 +15,19 @@ public:
 	}
 
 	virtual void update() override {
-		
+
 	}
 
 	virtual void draw() const override {
+		if (target.has_value()) {
+			vec2 t = target.value();
+
+			game->drawRect(DrawRectCommand{
+			.rect = {(int)t.x, (int)t.y, 15, 15},
+			.colour = {0, 255, 0}
+				});
+		}
+
 		game->drawRect(DrawRectCommand{
 			.rect = {(int)pos.x, (int)pos.y, 15, 15},
 			.colour = {255, 0, 0}
@@ -26,13 +35,21 @@ public:
 	}
 
 	Script<> mainAI() {
+		CancellationToken cancellationToken;
+		Script<> mover;
+
 		while (true) {
 			SDL_Point clickPos = co_await game->mouseClicked();
-			co_await moveTo({ .x = (float)clickPos.x, .y = (float)clickPos.y });
+			cancellationToken.cancel();
+			cancellationToken = CancellationToken();
+
+			mover = moveTo({ .x = (float)clickPos.x, .y = (float)clickPos.y }, cancellationToken);
 		}
 	}
 
-	Script<> moveTo(vec2 point) {
+	Script<> moveTo(vec2 point, CancellationToken cancelled) {
+		target = point;
+
 		vec2 diff = point - pos;
 		float distance = diff.length();
 
@@ -40,15 +57,23 @@ public:
 
 		int steps = distance / speed;
 		for (int i = 0; i < steps; i++) {
+			if (cancelled) {
+				co_return;
+			}
+
 			pos += dir * speed;
 
 			co_await game->nextFrame();
 		}
 		pos = point;
+
+		target.reset();
 	}
 
-	float speed = 4;
+	float speed = 15;
 	vec2 pos = { .x = Game::Width / 2, .y = Game::Height / 2 };
+	
+	std::optional<vec2> target;
 };
 
 Script<> gameScript(std::shared_ptr<Game> game) {

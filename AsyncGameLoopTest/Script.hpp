@@ -2,13 +2,38 @@
 #define SCRIPT_HPP
 
 #include <vector>
-#include <array>
 #include <optional>
 #include <experimental/coroutine>
+
+class CancellationToken {
+public:
+	CancellationToken() : internal(std::make_shared<Internal>()) {}
+
+	void cancel() {
+		internal->cancelled = true;
+	}
+
+	bool cancelled() {
+		return internal->cancelled;
+	}
+
+	operator bool() {
+		return cancelled();
+	}
+
+private:
+	struct Internal {
+		bool cancelled;
+	};
+
+	std::shared_ptr<Internal> internal;
+};
 
 template <typename T = void>
 class Script {
 public:
+	Script() {}
+
 	struct promise_type {
 		Script get_return_object() {
 			ScriptHandle promise = ScriptHandle::from_promise(*this);
@@ -59,6 +84,8 @@ private:
 template <>
 class Script<void> {
 public:
+	Script() {}
+
 	struct promise_type {
 		Script get_return_object() {
 			ScriptHandle promise = ScriptHandle::from_promise(*this);
