@@ -10,6 +10,7 @@
 
 #include "Script.hpp"
 #include "Event.hpp"
+#include "GameObject.hpp"
 
 struct Colour {
 	uint8_t r;
@@ -31,6 +32,8 @@ public:
 	Event<> nextFrame();
 	Event<SDL_Point> mouseClicked();
 
+	void addGameObject(std::shared_ptr<GameObject> gameObject);
+
 	void drawRect(const DrawRectCommand& cmd);
 
 	inline static const int Width = 1920;
@@ -42,8 +45,11 @@ private:
 	Event<> nextFrameEvent;
 	Event<SDL_Point> mouseClickedEvent;
 
+	std::vector<std::shared_ptr<GameObject>> gameObjects;
+
 	std::vector<DrawRectCommand> drawRectCommands;
 
+	bool update(Script<>& script);
 	void draw();
 };
 

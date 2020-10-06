@@ -1,47 +1,61 @@
 #include <stdio.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include <chrono>
 #include <memory>
 
+#include "vec2.hpp"
 #include "Game.hpp"
 
-Script<int> what(std::shared_ptr<Game> game) {
-	co_await game->nextFrame();
-	printf("wow\n");
-	co_return 42;
-}
+class MyGameObject : public GameObject {
+public:
+	MyGameObject(std::shared_ptr<Game> game) : GameObject(game) {
+		mainAI();
+	}
 
-Script<> gameScript(std::shared_ptr<Game> game) {
-	int whatever = co_await what(game);
+	virtual void update() override {
+		
+	}
 
-	float x = 50;
-	float y = 50;
+	virtual void draw() const override {
+		game->drawRect(DrawRectCommand{
+			.rect = {(int)pos.x, (int)pos.y, 15, 15},
+			.colour = {255, 0, 0}
+			});
+	}
 
-	while (true) {
-		SDL_Point clickPos = co_await game->mouseClicked();
+	Script<> mainAI() {
+		while (true) {
+			SDL_Point clickPos = co_await game->mouseClicked();
+			co_await moveTo({ .x = (float)clickPos.x, .y = (float)clickPos.y });
+		}
+	}
 
-		float dx = clickPos.x - x;
-		float dy = clickPos.y - y;
-		float distance = hypotf(dx, dy);
+	Script<> moveTo(vec2 point) {
+		vec2 diff = point - pos;
+		float distance = diff.length();
 
-		dx /= distance;
-		dy /= distance;
+		vec2 dir = diff / distance;
 
-		float speed = 15;
 		int steps = distance / speed;
-
 		for (int i = 0; i < steps; i++) {
-			x += dx * speed;
-			y += dy * speed;
-
-			game->drawRect(DrawRectCommand{
-				.rect = {(int)x, (int)y, 5, 5},
-				.colour = {255, 0, 0}
-				});
+			pos += dir * speed;
 
 			co_await game->nextFrame();
 		}
+		pos = point;
+	}
+
+	float speed = 4;
+	vec2 pos = { .x = Game::Width / 2, .y = Game::Height / 2 };
+};
+
+Script<> gameScript(std::shared_ptr<Game> game) {
+	game->addGameObject(std::make_shared<MyGameObject>(game));
+
+	while (true) {
+		co_await game->nextFrame();
 	}
 }
 

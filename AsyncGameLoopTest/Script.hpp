@@ -2,14 +2,13 @@
 #define SCRIPT_HPP
 
 #include <vector>
+#include <array>
 #include <optional>
 #include <experimental/coroutine>
 
 template <typename T = void>
 class Script {
 public:
-	Script(const Script&) = delete;
-
 	struct promise_type {
 		Script get_return_object() {
 			ScriptHandle promise = ScriptHandle::from_promise(*this);
@@ -21,7 +20,7 @@ public:
 		}
 
 		bool final_suspend() {
-			return false;
+			return true;
 		}
 
 		void return_value(T value) {
@@ -60,8 +59,6 @@ private:
 template <>
 class Script<void> {
 public:
-	Script(const Script&) = delete;
-
 	struct promise_type {
 		Script get_return_object() {
 			ScriptHandle promise = ScriptHandle::from_promise(*this);
@@ -73,7 +70,7 @@ public:
 		}
 
 		bool final_suspend() {
-			return false;
+			return true;
 		}
 
 		void return_void() {
