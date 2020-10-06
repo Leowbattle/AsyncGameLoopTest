@@ -19,14 +19,10 @@ public:
 	}
 
 	virtual void draw() const override {
-		if (target.has_value()) {
-			vec2 t = target.value();
-
-			game->drawRect(DrawRectCommand{
-			.rect = {(int)t.x, (int)t.y, 15, 15},
+		game->drawRect(DrawRectCommand{
+			.rect = {(int)orbitCentre.x, (int)orbitCentre.y, 15, 15},
 			.colour = {0, 255, 0}
-				});
-		}
+			});
 
 		game->drawRect(DrawRectCommand{
 			.rect = {(int)pos.x, (int)pos.y, 15, 15},
@@ -35,21 +31,46 @@ public:
 	}
 
 	Script<> mainAI() {
-		CancellationToken cancellationToken;
-		Script<> mover;
+		float startAngle = M_PI/2;
+		float orbitRadius = 150;
+		orbitCentre = { .x = Game::Width / 2, .y = Game::Height / 2 };
 
 		while (true) {
+			CancellationToken cancellationToken;
+			Script<> orbiterScript = orbiterAI(orbitCentre, startAngle, orbitRadius, cancellationToken);
+			
 			SDL_Point clickPos = co_await game->mouseClicked();
 			cancellationToken.cancel();
-			cancellationToken = CancellationToken();
 
-			mover = moveTo({ .x = (float)clickPos.x, .y = (float)clickPos.y }, cancellationToken);
+			orbitCentre = { .x = (float)clickPos.x, .y = (float)clickPos.y };
+
+			vec2 target = orbitCentre + (pos - orbitCentre).normalised() * orbitRadius;
+			startAngle = atan2f(target.y - orbitCentre.y, target.x - orbitCentre.x);
+
+			co_await moveTo(target);
 		}
 	}
 
-	Script<> moveTo(vec2 point, CancellationToken cancelled) {
-		target = point;
+	Script<> orbiterAI(vec2 orbitCentre, float startAngle, float orbitRadius, CancellationToken canelled) {
+		float orbitSpeed = speed / orbitRadius;
 
+		float angle = startAngle;
+
+		while (true) {
+			if (canelled) {
+				co_return;
+			}
+
+			pos.x = orbitRadius * cos(angle) + orbitCentre.x;
+			pos.y = orbitRadius * sin(angle) + orbitCentre.y;
+
+			angle += orbitSpeed;
+
+			co_await game->nextFrame();
+		}
+	}
+
+	Script<> moveTo(vec2 point) {
 		vec2 diff = point - pos;
 		float distance = diff.length();
 
@@ -57,23 +78,16 @@ public:
 
 		int steps = distance / speed;
 		for (int i = 0; i < steps; i++) {
-			if (cancelled) {
-				co_return;
-			}
-
 			pos += dir * speed;
 
 			co_await game->nextFrame();
 		}
 		pos = point;
-
-		target.reset();
 	}
 
 	float speed = 15;
 	vec2 pos = { .x = Game::Width / 2, .y = Game::Height / 2 };
-	
-	std::optional<vec2> target;
+	vec2 orbitCentre;
 };
 
 Script<> gameScript(std::shared_ptr<Game> game) {
