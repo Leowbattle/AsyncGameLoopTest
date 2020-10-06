@@ -1,11 +1,5 @@
 #include "Script.hpp"
 
-Script::~Script() {
-	if (handle) {
-		handle.destroy();
-	}
-}
-
 Script::Script(ScriptHandle handle) : handle(handle) {}
 
 Script Script::promise_type::get_return_object() {
@@ -22,5 +16,20 @@ bool Script::promise_type::final_suspend() {
 }
 
 void Script::promise_type::return_void() {
-	
+	for (std::experimental::coroutine_handle<> coro : waiters) {
+		coro.resume();
+	}
+	waiters.clear();
+}
+
+bool Script::await_ready() {
+	return handle.done();
+}
+
+void Script::await_suspend(std::experimental::coroutine_handle<> coro) {
+	handle.promise().waiters.push_back(coro);
+}
+
+void Script::await_resume() {
+
 }
